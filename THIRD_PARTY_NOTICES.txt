@@ -1,0 +1,17 @@
+WT Studio — Third-Party Notices
+
+DirectXTex / texconv
+--------------------
+WT Studio bundles the texconv command-line utility from Microsoft DirectXTex
+for BC1 and BC3 DDS compression.
+
+Project:
+    Microsoft DirectXTex
+
+License:
+    MIT License
+
+The complete license text is included at:
+    tools\texture_encoder\LICENSE_DirectXTex.txt
+
+WT Studio does not require or automatically use NVIDIA Texture Tools.

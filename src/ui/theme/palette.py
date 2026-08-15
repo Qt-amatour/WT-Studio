@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+
+class Palette:
+    WINDOW = "#202020"
+    CENTRAL = "#181818"
+    PANEL = "#202020"
+    PANEL_ALT = "#202020"
+    CONTROL = "#2A2A2A"
+    CONTROL_HOVER = "#333333"
+    CONTROL_PRESSED = "#3A3A3A"
+
+    BORDER = "#343434"
+    BORDER_SOFT = "#2B2B2B"
+    BORDER_HOVER = "#505050"
+    SPLITTER = "#202020"
+    SPLITTER_HOVER = "#D9822B"
+
+    TEXT = "#C8C8C8"
+    TEXT_BRIGHT = "#DEDEDE"
+    TEXT_HEADER = "#B4B4B4"
+    TEXT_MUTED = "#929292"
+    TEXT_DISABLED = "#686868"
+
+    ACCENT = "#D9822B"
+    ACCENT_HOVER = "#E89136"
+    ACCENT_PRESSED = "#C87422"
+    SELECTION = "#3B3B3B"
+    SELECTION_INACTIVE = "#323232"
+
+    SUCCESS = "#6A9955"
+    WARNING = "#D7BA7D"
+    ERROR = "#F48771"
+
+    SCROLL_TRACK = "transparent"
+    SCROLL_HANDLE = "#303030"
+    SCROLL_HANDLE_HOVER = "#686868"
