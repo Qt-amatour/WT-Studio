@@ -240,8 +240,15 @@ class MainWindow(FramelessMainWindow):
         # View -------------------------------------------------
         view_menu = menu_bar.addMenu("View")
 
-        self.left_panel_action = self.left_dock.toggleViewAction()
-        self.left_panel_action.setText("Project Sidebar")
+        # The Project Sidebar intentionally has NoDockWidgetFeatures, so
+        # QDockWidget.toggleViewAction() cannot reliably hide it on Windows.
+        # Use an explicit checkable action and drive visibility ourselves.
+        self.left_panel_action = QAction(
+            "Project Sidebar",
+            self,
+        )
+        self.left_panel_action.setCheckable(True)
+        self.left_panel_action.setChecked(True)
         view_menu.addAction(self.left_panel_action)
 
         self.workspace_panel_action = self.workspace_dock.toggleViewAction()
@@ -304,6 +311,13 @@ class MainWindow(FramelessMainWindow):
         )
         self.clear_user_skins_path_action.triggered.connect(
             self.clear_user_skins_path
+        )
+
+        # The menu action is the user's persistent sidebar preference.
+        # Do not mirror QDockWidget.visibilityChanged into it: minimizing the
+        # main window temporarily reports the dock as invisible on Windows.
+        self.left_panel_action.toggled.connect(
+            self.left_dock.setVisible
         )
 
         self.texture_info_action.toggled.connect(
@@ -412,6 +426,7 @@ class MainWindow(FramelessMainWindow):
         )
 
     def reset_layout(self) -> None:
+        self.left_panel_action.setChecked(True)
         self.left_dock.show()
         self.workspace_dock.show()
         self.left_splitter.setSizes([300, 600])
@@ -486,7 +501,7 @@ class MainWindow(FramelessMainWindow):
             f"File size: {info.executable.stat().st_size} bytes\n"
             f"SHA-256: {digest}\n"
             "External NVTT fallback: DISABLED\n"
-            "BC7 game export: DISABLED\n"
+            "BC7 game export: DISABLED (experimental encoder retained)\n"
             "WT Studio 1.0 export formats: "
             "TGA, DDS ARGB 8.8.8.8, BC1, BC3"
         )

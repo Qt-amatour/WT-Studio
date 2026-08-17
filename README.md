@@ -1,4 +1,4 @@
-# WT Studio 0.9.0
+# WT Studio 0.9.1
 
 WT Studio is an independent Windows desktop toolkit for preparing War Thunder
 user-skin textures and related BLK configuration files.
@@ -41,7 +41,7 @@ Current game-export formats:
 - DDS BC1
 - DDS BC3
 
-BC7 game export is intentionally disabled. BC7 remains supported as input.
+BC7 remains supported as input. The experimental War Thunder-style BC7 encoder is retained internally for future compatibility testing, but BC7 is not exposed as a game-export format because the current UserSkins test did not resolve the exported texture in game.
 
 For packed `_n` materials, WT Studio can accept either DirectX or OpenGL RGB
 normal-map sources and converts the Y convention when required.
@@ -131,16 +131,18 @@ build_windows_release.bat
 The build process creates a standalone application and the final archive:
 
 ```text
-release\WT_Studio_0.9.0_Windows_x64.zip
+release\WT_Studio_0.9.1_Windows_x64.zip
 ```
 
 ## Current release status
 
-WT Studio 0.9.0 is the first public release.
+WT Studio 0.9.1 is the current release.
 
-The pre-release candidate that became 0.9.0 passed the current automated test
-suite and external workflow testing before promotion. The final 0.9.0 release
-contains no intentional workflow changes relative to that validated candidate.
+Version 0.9.1 is a focused maintenance update to the initial 0.9.0 public
+release. It adds maximized startup behavior, fixes Project Sidebar
+show/hide persistence across minimize/restore, and retains the experimental
+BC7 export mechanism internally while keeping BC7 disabled as a game-export
+profile until War Thunder UserSkins compatibility is confirmed.
 
 ## Notes and limitations
 
@@ -150,7 +152,7 @@ contains no intentional workflow changes relative to that validated candidate.
 - Keep backups of important skin projects and original BLK files.
 - Moving or renaming files referenced by a `.wts` project can break those
   stored paths.
-- BC7 export is not available in WT Studio 0.9.0.
+- BC7 game export is currently disabled. The experimental BC7 encoder and legacy War Thunder-style DDS container code remain in the source for future compatibility testing.
 
 ## Independence / trademark notice
 
@@ -166,3 +168,8 @@ WT Studio source code is released under the MIT License. See `LICENSE`.
 Bundled third-party components retain their own licenses. See
 `THIRD_PARTY_NOTICES.txt` and the license files distributed with those
 components.
+
+
+## Development note
+
+The latest public stable release remains **WT Studio 0.9.0**. This source package is the release candidate for 0.9.1.

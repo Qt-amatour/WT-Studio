@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.9.1 — Maintenance release
+
+### UI and startup
+
+- WT Studio now opens the main window maximized on first presentation.
+- `View -> Project Sidebar` can hide and restore the fixed left sidebar.
+- Fixed Project Sidebar state so minimizing/restoring the main window no
+  longer hides the sidebar or changes the user's menu preference.
+- Existing frameless-window move, snap, maximize/restore and minimize
+  behavior remains unchanged.
+
+### BC7 compatibility work
+
+- Added and validated an internal experimental War Thunder-style BC7 encoder
+  path using bundled DirectXTex BC7_UNORM output plus the legacy `BC7 `
+  container layout observed in War Thunder / Asset Viewer DDS references.
+- BC7 remains fully supported as an input format.
+- BC7 game export is intentionally hidden from the user-facing exporter
+  because current War Thunder UserSkins testing did not resolve the exported
+  BC7 texture in game.
+- The BC7 encoder, container adapter, validator support and regression tests
+  remain in the source so the profile can be re-enabled if game support
+  changes in the future.
+
+### Validation
+
+- Automated regression suite: 32 tests.
+- Stable 0.9.1 release candidate validated in the Windows runtime before
+  promotion to 0.9.1.
+
 ## 0.9.0 — Initial public release
 
 ### Core workflow
@@ -69,3 +99,4 @@
 - `.wts` projects reference external files rather than embedding them.
 - WT Studio does not scan the War Thunder installation or Asset Viewer
   automatically.
+

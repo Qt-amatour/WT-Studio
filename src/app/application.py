@@ -1,6 +1,6 @@
 # ============================================================
 # WT Studio
-# Version : 0.9.0
+# Version : 0.9.1
 #
 # File:
 # application.py
@@ -87,7 +87,16 @@ class WTApplication:
 
     def _show_main_window(self) -> None:
         if not self.window.isVisible():
+            # Show once as a normal window so the validated frameless-window
+            # geometry code can establish its normal restore geometry, then
+            # maximize on the next event-loop turn. This gives WT Studio a
+            # large/maximized startup state without changing restore, snap,
+            # minimize or title-bar behaviour.
             self.window.show()
+            QTimer.singleShot(
+                0,
+                self.window.showMaximized,
+            )
 
         self.window.raise_()
         self.window.activateWindow()

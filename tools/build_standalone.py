@@ -112,7 +112,7 @@ def write_build_info(output_dir: Path, *, debug: bool) -> None:
     encoder = output_dir / "tools" / "texture_encoder" / "texconv.exe"
     info = {
         "product": "WT Studio",
-        "version": "0.9.0",
+        "version": "0.9.1",
         "build_type": "debug" if debug else "release",
         "platform": platform.platform(),
         "python": platform.python_version(),
@@ -173,7 +173,7 @@ def create_zip(output_dir: Path, *, debug: bool) -> Path:
     release_dir = ROOT / "release"
     release_dir.mkdir(parents=True, exist_ok=True)
     suffix = "Debug" if debug else "Windows_x64"
-    archive_path = release_dir / f"WT_Studio_0.9.0_{suffix}.zip"
+    archive_path = release_dir / f"WT_Studio_0.9.1_{suffix}.zip"
     if archive_path.exists():
         archive_path.unlink()
 

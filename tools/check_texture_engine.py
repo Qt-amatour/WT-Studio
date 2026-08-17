@@ -30,7 +30,7 @@ def main() -> int:
     print(f"Required bundled encoder: {resolver.expected_executable}")
     print("Runtime policy: bundled DirectXTex only")
     print("External NVTT fallback: DISABLED")
-    print("BC7 game export: DISABLED")
+    print("BC7 game export: DISABLED (experimental encoder retained)")
     print(
         "WT Studio 1.0 export formats: "
         "TGA, DDS ARGB 8.8.8.8, BC1, BC3"

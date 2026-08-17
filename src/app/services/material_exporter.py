@@ -37,6 +37,7 @@ class MaterialExportFormat(Enum):
     DDS_ARGB_8888 = "dds_argb_8888"
     DDS_BC1 = "dds_bc1"
     DDS_BC3 = "dds_bc3"
+    DDS_BC7_EXPERIMENTAL = "dds_bc7_experimental"
 
     @property
     def display_name(self) -> str:
@@ -49,6 +50,8 @@ class MaterialExportFormat(Enum):
                 "DDS BC1 — DXT1 — dedicated for _ao",
             MaterialExportFormat.DDS_BC3:
                 "DDS BC3 — DXT5",
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL:
+                "DDS BC7 — EXPERIMENTAL — War Thunder _n",
         }[self]
 
     @property
@@ -58,7 +61,14 @@ class MaterialExportFormat(Enum):
             MaterialExportFormat.DDS_ARGB_8888: ".dds",
             MaterialExportFormat.DDS_BC1: ".dds",
             MaterialExportFormat.DDS_BC3: ".dds",
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL: ".dds",
         }[self]
+
+    @property
+    def is_user_selectable(self) -> bool:
+        # BC7 support is retained internally for future compatibility tests,
+        # but current War Thunder UserSkins testing did not resolve the file.
+        return self is not MaterialExportFormat.DDS_BC7_EXPERIMENTAL
 
     @property
     def is_dds(self) -> bool:
@@ -69,6 +79,7 @@ class MaterialExportFormat(Enum):
         return self in {
             MaterialExportFormat.DDS_BC1,
             MaterialExportFormat.DDS_BC3,
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL,
         }
 
 
@@ -152,7 +163,7 @@ class MaterialExporter:
     independently, because War Thunder uses Alpha as texture data/masks,
     not necessarily transparency.
 
-    BC1/BC3 compression is delegated exclusively to the bundled
+    BC1/BC3/BC7 compression is delegated exclusively to the bundled
     DirectXTex texconv executable. External encoders are never used.
 
     The compressor receives one mip level at a time. This prevents the
@@ -278,6 +289,16 @@ class MaterialExporter:
             raise MaterialExportError(
                 material.build_error
                 or "Material is not ready for export."
+            )
+
+        if (
+            options.export_format
+            is MaterialExportFormat.DDS_BC7_EXPERIMENTAL
+            and material.material_type is not MaterialType.NORMAL
+        ):
+            raise MaterialExportError(
+                "Experimental BC7 export is currently enabled only for "
+                "Normal (_n) materials."
             )
 
         output_path = Path(options.output_directory) / self._build_filename(
@@ -606,6 +627,7 @@ class MaterialExporter:
         if export_format not in {
             MaterialExportFormat.DDS_BC1,
             MaterialExportFormat.DDS_BC3,
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL,
         }:
             raise MaterialExportError(
                 "DirectXTex received a non-BC export format."
@@ -715,6 +737,7 @@ class MaterialExporter:
         dxgi_format = {
             MaterialExportFormat.DDS_BC1: "BC1_UNORM",
             MaterialExportFormat.DDS_BC3: "BC3_UNORM",
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL: "BC7_UNORM",
         }.get(export_format)
 
         if dxgi_format is None:
@@ -831,9 +854,10 @@ class MaterialExporter:
         if export_format not in {
             MaterialExportFormat.DDS_BC1,
             MaterialExportFormat.DDS_BC3,
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL,
         }:
             raise MaterialExportError(
-                "WT Studio 1.0 exports only BC1 and BC3 compressed DDS."
+                "Unsupported compressed DDS export format."
             )
 
         if not payloads:
@@ -842,29 +866,50 @@ class MaterialExporter:
             )
 
         mipmap_count = len(payloads)
-        flags = (
-            0x00000001  # DDSD_CAPS
-            | 0x00000002  # DDSD_HEIGHT
-            | 0x00000004  # DDSD_WIDTH
-            | 0x00001000  # DDSD_PIXELFORMAT
-            | 0x00080000  # DDSD_LINEARSIZE
+        is_wt_bc7 = (
+            export_format
+            is MaterialExportFormat.DDS_BC7_EXPERIMENTAL
         )
 
-        if mipmap_count > 1:
-            flags |= 0x00020000  # DDSD_MIPMAPCOUNT
+        if is_wt_bc7:
+            # AssetViewer / War Thunder reference BC7 DDS files use a
+            # 128-byte legacy container with FourCC "BC7 ". They keep
+            # DDSD_MIPMAPCOUNT set even for one mip, leave linear size
+            # at zero, and keep caps at DDSCAPS_TEXTURE only. The BC7
+            # payload itself is standard 16-byte-per-block BC7 data.
+            flags = 0x00021007
+            caps = 0x00001000
+            linear_size = 0
+            header_mipmap_count = mipmap_count
+            fourcc_bytes = b"BC7 "
+        else:
+            flags = (
+                0x00000001  # DDSD_CAPS
+                | 0x00000002  # DDSD_HEIGHT
+                | 0x00000004  # DDSD_WIDTH
+                | 0x00001000  # DDSD_PIXELFORMAT
+                | 0x00080000  # DDSD_LINEARSIZE
+            )
+            if mipmap_count > 1:
+                flags |= 0x00020000  # DDSD_MIPMAPCOUNT
 
-        caps = 0x00001000  # DDSCAPS_TEXTURE
-        if mipmap_count > 1:
-            caps |= (
-                0x00000008  # DDSCAPS_COMPLEX
-                | 0x00400000  # DDSCAPS_MIPMAP
+            caps = 0x00001000  # DDSCAPS_TEXTURE
+            if mipmap_count > 1:
+                caps |= (
+                    0x00000008  # DDSCAPS_COMPLEX
+                    | 0x00400000  # DDSCAPS_MIPMAP
+                )
+
+            linear_size = len(payloads[0])
+            header_mipmap_count = (
+                mipmap_count if mipmap_count > 1 else 0
+            )
+            fourcc_bytes = (
+                b"DXT1"
+                if export_format is MaterialExportFormat.DDS_BC1
+                else b"DXT5"
             )
 
-        fourcc_bytes = (
-            b"DXT1"
-            if export_format is MaterialExportFormat.DDS_BC1
-            else b"DXT5"
-        )
         fourcc = struct.unpack("<I", fourcc_bytes)[0]
 
         values = [
@@ -872,9 +917,9 @@ class MaterialExporter:
             flags,
             height,
             width,
-            len(payloads[0]),
+            linear_size,
             0,
-            mipmap_count if mipmap_count > 1 else 0,
+            header_mipmap_count,
             *([0] * 11),
             cls.DDS_PIXEL_FORMAT_SIZE,
             0x00000004,  # DDPF_FOURCC
@@ -931,6 +976,8 @@ class MaterialExporter:
                 DDSFormat.BC1,
             MaterialExportFormat.DDS_BC3:
                 DDSFormat.BC3,
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL:
+                DDSFormat.BC7,
         }
         try:
             return mapping[export_format]
@@ -982,7 +1029,10 @@ class MaterialExporter:
 
         if export_format is MaterialExportFormat.DDS_BC1:
             bytes_per_block = 8
-        elif export_format is MaterialExportFormat.DDS_BC3:
+        elif export_format in {
+            MaterialExportFormat.DDS_BC3,
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL,
+        }:
             bytes_per_block = 16
         else:
             raise MaterialExportError(

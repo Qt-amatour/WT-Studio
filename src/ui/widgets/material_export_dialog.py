@@ -64,11 +64,10 @@ class MaterialExportDialog(FramelessDialog):
 
         self.format_combo = DownwardComboBox()
 
-        visible_formats = (
-            MaterialExportFormat.TGA,
-            MaterialExportFormat.DDS_ARGB_8888,
-            MaterialExportFormat.DDS_BC1,
-            MaterialExportFormat.DDS_BC3,
+        visible_formats = tuple(
+            export_format
+            for export_format in MaterialExportFormat
+            if export_format.is_user_selectable
         )
 
         for export_format in visible_formats:

@@ -7,15 +7,15 @@ set "BUILD_MODE=%~1"
 if /I "%BUILD_MODE%"=="debug" (
     set "BUILD_LABEL=Debug"
     set "BUILD_ARGUMENT=--debug"
-    set "OUTPUT_FILE=release\WT_Studio_0.9.0_Debug.zip"
+    set "OUTPUT_FILE=release\WT_Studio_0.9.1_Debug.zip"
 ) else (
     set "BUILD_LABEL=Release"
     set "BUILD_ARGUMENT="
-    set "OUTPUT_FILE=release\WT_Studio_0.9.0_Windows_x64.zip"
+    set "OUTPUT_FILE=release\WT_Studio_0.9.1_Windows_x64.zip"
 )
 
 echo ========================================================
-echo WT Studio 0.9.0 - Windows Standalone %BUILD_LABEL% Build
+echo WT Studio 0.9.1 - Windows Standalone %BUILD_LABEL% Build
 echo ========================================================
 
 set "PYTHON_CMD="

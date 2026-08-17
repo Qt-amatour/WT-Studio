@@ -176,10 +176,62 @@ class DDSValidatorTests(unittest.TestCase):
 
             self.assertEqual(destination.read_bytes(), b"known-good")
 
-    def test_bc7_is_not_an_export_format(self) -> None:
-        self.assertNotIn(
-            "DDS_BC7",
+    def test_wt_bc7_export_uses_reference_legacy_header(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "test_bc7.dds"
+            MaterialExporter._assemble_bc_dds(
+                output_path=path,
+                export_format=(
+                    MaterialExportFormat.DDS_BC7_EXPERIMENTAL
+                ),
+                width=8,
+                height=8,
+                payloads=[
+                    b"\x11" * 64,
+                    b"\x22" * 16,
+                ],
+            )
+
+            raw = path.read_bytes()
+            header = struct.unpack("<31I", raw[4:128])
+
+            self.assertEqual(header[1], 0x00021007)
+            self.assertEqual(header[4], 0)
+            self.assertEqual(header[6], 2)
+            self.assertEqual(struct.pack("<I", header[20]), b"BC7 ")
+            self.assertEqual(header[26], 0x00001000)
+
+            report = DDSValidator.validate_export(
+                path,
+                expected_format=DDSFormat.BC7,
+                expected_width=8,
+                expected_height=8,
+                expected_mipmap_count=2,
+            )
+            self.assertEqual(report.actual_payload_size, 80)
+            self.assertEqual(
+                report.header_kind,
+                DDSHeaderKind.LEGACY,
+            )
+
+    def test_bc7_mechanism_is_retained_but_not_user_selectable(self) -> None:
+        self.assertIn(
+            "DDS_BC7_EXPERIMENTAL",
             MaterialExportFormat.__members__,
+        )
+        self.assertFalse(
+            MaterialExportFormat.DDS_BC7_EXPERIMENTAL.is_user_selectable
+        )
+        self.assertTrue(
+            MaterialExportFormat.DDS_BC3.is_user_selectable
+        )
+        self.assertEqual(
+            MaterialExporter._bc_level_size(
+                MaterialExportFormat.DDS_BC7_EXPERIMENTAL,
+                8,
+                8,
+            ),
+            64,
         )
 
 
